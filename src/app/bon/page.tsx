@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Receipt, Market } from '@/lib/types';
 
 type Step = 'upload' | 'processing' | 'review';
 
-export default function BonPage() {
+function BonPageInner() {
   const searchParams = useSearchParams();
   const calcRunId = searchParams.get('calc');
 
@@ -298,5 +298,13 @@ export default function BonPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BonPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="spinner" style={{ width: 32, height: 32 }} /></div>}>
+      <BonPageInner />
+    </Suspense>
   );
 }

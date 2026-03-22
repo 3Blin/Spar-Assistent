@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { QUALITY_STATUS_CONFIG } from '@/lib/types';
 import type { ValidationResult, CalculationResponse, Receipt } from '@/lib/types';
 
-export default function ValidierungPage() {
+function ValidierungPageInner() {
   const searchParams = useSearchParams();
   const calcRunId = searchParams.get('calc');
   const receiptId = searchParams.get('receipt');
@@ -227,5 +227,13 @@ export default function ValidierungPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ValidierungPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="spinner" style={{ width: 32, height: 32 }} /></div>}>
+      <ValidierungPageInner />
+    </Suspense>
   );
 }
