@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Settings, Info, Table2, Trophy, MapPin, Check, Navigation, LocateFixed } from 'lucide-react';
+import { Camera, Settings, Info, Table2, Trophy, MapPin, Check, Navigation, LocateFixed, Plus, X } from 'lucide-react';
 import type { Market, Category, PriceEntry, CalculationResponse } from '@/lib/types';
 
 type TravelMode = 'none' | 'fixed' | 'factor';
@@ -196,6 +196,13 @@ export default function Dashboard() {
   const [userLat,setUserLat]=useState<number|null>(null);
   const [userLng,setUserLng]=useState<number|null>(null);
   const [radiusKm,setRadiusKm]=useState(10);
+
+  // Add-Market form state
+  const [showAddMarket, setShowAddMarket]   = useState(false);
+  const [newMarketName, setNewMarketName]   = useState('');
+  const [newMarketAddr, setNewMarketAddr]   = useState('');
+  const [addingMarket, setAddingMarket]     = useState(false);
+  const [addMarketError, setAddMarketError] = useState<string | null>(null);
   const marketDistances=useMemo<Record<string,number|null>>(()=>{
     if(userLat==null||userLng==null)return{};
     const map:Record<string,number|null>={};
@@ -229,7 +236,40 @@ export default function Dashboard() {
   };
 
 
-  const loadData = useCallback(async () => {
+const handleAddMarket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMarketName.trim()) return;
+    setAddingMarket(true);
+    setAddMarketError(null);
+    let lat: number | null = null;
+    let lng: number | null = null;
+    const geoSearch = [newMarketName.trim(), newMarketAddr.trim()].filter(Boolean).join(' ');
+    try {
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoSearch)}&format=json&limit=1`,
+        { headers: { 'Accept-Language': 'de', 'User-Agent': 'SparAssistent/1.0' } }
+      );
+      const geoData = await geoRes.json();
+      if (geoData.length > 0) { lat = parseFloat(geoData[0].lat); lng = parseFloat(geoData[0].lon); }
+    } catch (_) { /* optional */ }
+    const postRes = await fetch('/api/markets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newMarketName.trim(), latitude: lat, longitude: lng }),
+    });
+    if (!postRes.ok) {
+      const b = await postRes.json().catch(() => ({}));
+      setAddMarketError(b.error || 'Fehler beim Speichern');
+      setAddingMarket(false);
+      return;
+    }
+    const newMkt: Market = await postRes.json();
+    setMarkets(prev => [...prev, newMkt]);
+    setActiveMarketIds(prev => new Set([...prev, newMkt.id]));
+    setNewMarketName(''); setNewMarketAddr(''); setShowAddMarket(false); setAddingMarket(false);
+  };
+
+    const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [marketsRes, catsRes, pricesRes] = await Promise.all([
@@ -517,7 +557,42 @@ export default function Dashboard() {
             );
           })}
         </div>
-        {geoState!=='active'&&(<p className="text-xs mt-2" style={{color:'var(--color-text-muted)'}}>Auswahl wird gespeichert · <span style={{color:'var(--color-accent)'}}>Umkreis-Suche</span> sortiert & filtert nach deinem Standort</p>)}
+        {/* Add market inline form */}
+        <div className="add-market-wrap">
+          {!showAddMarket ? (
+            <button type="button" className="add-market-trigger" onClick={() => setShowAddMarket(true)}>
+              <Plus size={12} aria-hidden="true" />
+              Markt hinzufügen
+            </button>
+          ) : (
+            <form onSubmit={handleAddMarket} className="add-market-form" noValidate>
+              <div className="add-market-fields">
+                <input type="text" placeholder="Marktname (z.B. Rewe)" value={newMarketName}
+                  onChange={e => setNewMarketName(e.target.value)} required autoFocus
+                  className="add-market-input" disabled={addingMarket} />
+                <input type="text" placeholder="Ort / Adresse (optional)" value={newMarketAddr}
+                  onChange={e => setNewMarketAddr(e.target.value)}
+                  className="add-market-input" disabled={addingMarket} />
+              </div>
+              {addMarketError && (
+                <p className="text-xs mt-1" style={{ color: '#dc2626' }}>⚠️ {addMarketError}</p>
+              )}
+              <div className="add-market-actions">
+                <button type="submit" disabled={addingMarket || !newMarketName.trim()} className="btn-primary add-market-save">
+                  {addingMarket ? <><span className="spinner" style={{ width: 12, height: 12 }} /> Speichere…</> : 'Speichern'}
+                </button>
+                <button type="button" className="btn-secondary add-market-cancel" disabled={addingMarket}
+                  onClick={() => { setShowAddMarket(false); setAddMarketError(null); setNewMarketName(''); setNewMarketAddr(''); }}>
+                  <X size={12} aria-hidden="true" /> Abbrechen
+                </button>
+              </div>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                Koordinaten via OpenStreetMap.
+              </p>
+            </form>
+          )}
+        </div>
+        {geoState!=='active'&&!showAddMarket&&(<p className="text-xs mt-1" style={{color:'var(--color-text-muted)'}}>Auswahl wird gespeichert · <span style={{color:'var(--color-accent)'}}>Umkreis-Suche</span> sortiert &amp; filtert nach deinem Standort</p>)}
       </div>
 
       {/* ── Settings (collapsible) ── */}
