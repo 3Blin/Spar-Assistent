@@ -671,6 +671,87 @@ td.trust-stale    { border-left: 3px solid #ef4444 !important; }
   font-weight: 600;
 }
 
+/* ── Add-Market Form ──────────────────────────────────────────────────────── */
+.add-market-wrap {
+  margin-top: 0.6rem;
+}
+
+.add-market-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1.5px dashed var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.add-market-trigger:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+  border-style: solid;
+}
+
+.add-market-form {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-market-fields {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.add-market-input {
+  flex: 1;
+  min-width: 140px;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.add-market-input:focus {
+  border-color: var(--color-accent);
+}
+
+.add-market-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.add-market-save {
+  font-size: 0.8rem !important;
+  padding: 5px 14px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.add-market-cancel {
+  font-size: 0.8rem !important;
+  padding: 5px 10px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* ── Spinner ────────────────────────────────────────────────────────────────── */
 .spinner {
   width: 20px;
