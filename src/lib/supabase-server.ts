@@ -11,9 +11,9 @@ export function createSSRClient() {
   const cookieStore = cookies();
   return createSSRServerClient(supabaseUrl, supabaseAnon, {
     cookies: {
-      getAll()     { return cookieStore.getAll(); },
-      setAll(list) {
-        try { list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }
+      getAll() { return cookieStore.getAll(); },
+      setAll(list: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        try { list.forEach(({ name, value, options }) => cookieStore.set(name, value, options as any)); }
         catch { /* read-only context (e.g. Server Component render), ignore */ }
       },
     },
