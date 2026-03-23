@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
       travel_mode: body.travel_mode || 'none',
       travel_factor: body.travel_factor,
       exclude_incomplete: body.exclude_incomplete ?? false,
+      market_ids: Array.isArray(body.market_ids) ? body.market_ids : undefined,
     });
     return NextResponse.json(result, { status: 201 });
   } catch (err: any) {

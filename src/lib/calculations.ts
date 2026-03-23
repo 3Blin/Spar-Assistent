@@ -13,12 +13,18 @@ export async function executeCalculation(request: CalculationRequest): Promise<C
   const db = createServerClient();
   const regionCode = request.region_code || process.env.NEXT_PUBLIC_DEFAULT_REGION || 'neustadt';
 
-  // 1. Load active markets for region
-  const { data: markets, error: marketsErr } = await db
+  // 1. Load active markets for region (optionally filtered by market_ids)
+  let marketsQuery = db
     .from('markets')
     .select('*')
     .eq('region_code', regionCode)
     .eq('is_active', true);
+
+  if (request.market_ids && request.market_ids.length > 0) {
+    marketsQuery = marketsQuery.in('id', request.market_ids);
+  }
+
+  const { data: markets, error: marketsErr } = await marketsQuery;
 
   if (marketsErr) throw new Error(`Märkte laden fehlgeschlagen: ${marketsErr.message}`);
   if (!markets || markets.length === 0) throw new Error('Keine aktiven Märkte für diese Region gefunden.');

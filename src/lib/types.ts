@@ -125,6 +125,7 @@ export interface CalculationRequest {
   travel_mode: 'none' | 'fixed' | 'factor';
   travel_factor?: number;
   exclude_incomplete?: boolean;
+  market_ids?: string[]; // Optional: filter to specific markets
 }
 
 export interface CalculationResponse {
