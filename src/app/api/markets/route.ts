@@ -15,19 +15,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const db = createServerClient();
-  const body = await request.json();
 
-  const { name, region_code, distance_km, fixed_travel_cost, is_active } = body;
-  if (!name) return NextResponse.json({ error: 'Name ist erforderlich' }, { status: 400 });
+  // Auth check — only logged-in users may add markets
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+
+  const body = await request.json();
+  const { name, region_code, distance_km, fixed_travel_cost, is_active, latitude, longitude } = body;
+  if (!name || !name.trim()) return NextResponse.json({ error: 'Name ist erforderlich' }, { status: 400 });
 
   const { data, error } = await db
     .from('markets')
     .insert({
-      name,
+      name: name.trim(),
       region_code: region_code || 'neustadt',
       distance_km: distance_km ?? null,
       fixed_travel_cost: fixed_travel_cost ?? null,
       is_active: is_active ?? true,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
     })
     .select()
     .single();
