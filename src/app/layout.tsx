@@ -12,7 +12,6 @@ const fraunces = Fraunces({
   display: 'swap',
   weight: ['400', '600', '700', '800'],
   style: ['normal', 'italic'],
-  axes: ['opsz'],
 });
 
 const dmSans = DM_Sans({

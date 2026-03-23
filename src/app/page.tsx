@@ -363,8 +363,8 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-2">
           {markets.map(m => {
             const active = activeMarketIds.has(m.id);
+            // AUDIT-FIX: aria-pressed für Screen-Reader Toggle-Zustand
             return (
-              {/* AUDIT-FIX: aria-pressed für Screen-Reader Toggle-Zustand */}
               <button
                 key={m.id}
                 onClick={() => toggleMarket(m.id)}
