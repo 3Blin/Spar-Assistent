@@ -481,7 +481,7 @@ export default function Dashboard() {
           {geoState === 'idle' || geoState === 'denied' || geoState === 'error' ? (
             <button onClick={requestGeolocation} className="geo-btn" aria-label="Standort erkennen" title={geoState==='denied'?'Standortzugriff verweigert':undefined}>
               <Navigation size={12} aria-hidden="true"/>
-              {geoState==='denied'?'Zugriff verweigert':geoState==='error'?'Fehler – nochmal?':'Umkreis-Suche'}
+              {geoState==='denied'?'Zugriff verweigert':geoState==='error'?'Fehler – nochmal?':'📍 Umkreis-Suche'}
             </button>
           ) : geoState === 'loading' ? (
             <span className="geo-btn geo-btn-loading" aria-live="polite"><span className="spinner" style={{width:12,height:12}} aria-hidden="true"/>Ermittle…</span>
@@ -517,7 +517,7 @@ export default function Dashboard() {
             );
           })}
         </div>
-        {geoState!=='active'&&(<p className="text-xs mt-2" style={{color:'var(--color-text-muted)'}}>Auswahl wird gespeichert · <span style={{color:'var(--color-accent)'}}>Umkreis-Suche</span> findet Märkte in deiner Nähe</p>)}
+        {geoState!=='active'&&(<p className="text-xs mt-2" style={{color:'var(--color-text-muted)'}}>Auswahl wird gespeichert · <span style={{color:'var(--color-accent)'}}>Umkreis-Suche</span> sortiert & filtert nach deinem Standort</p>)}
       </div>
 
       {/* ── Settings (collapsible) ── */}
