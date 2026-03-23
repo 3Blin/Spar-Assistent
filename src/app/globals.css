@@ -202,6 +202,58 @@ input:focus, select:focus {
   animation: slideUp 0.4s ease forwards;
 }
 
+/* ── Auth page card ── */
+.auth-card {
+  width: 100%;
+}
+.auth-card .w-full { width: 100%; }
+
+/* ── Legal pages ── */
+.legal-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.legal-card {
+  padding: 2rem;
+}
+.legal-back {
+  display: inline-block;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: color 0.15s ease;
+}
+.legal-back:hover { color: var(--color-text); }
+.legal-section {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.legal-section:last-of-type { border-bottom: none; margin-bottom: 0; }
+.legal-section h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+.legal-section h3 {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+.legal-section p { font-size: 0.875rem; line-height: 1.7; color: var(--color-text); }
+.legal-section ul {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  list-style: disc;
+  padding-left: 1.25rem;
+  color: var(--color-text);
+}
+.legal-section a { color: var(--color-accent); }
+
 /* ── Portal tooltip ── */
 .tooltip-popup {
   position: fixed;
@@ -249,6 +301,30 @@ input:focus, select:focus {
   white-space: nowrap;
   line-height: 1.3;
 }
+
+/* ── Trust indicator: left-border on price cells by source ── */
+td.trust-seed    { border-left: 3px solid #f59e0b; }   /* amber  – estimated  */
+td.trust-manual  { border-left: 3px solid #9ca3af; }   /* gray   – manual     */
+td.trust-prospekt{ border-left: 3px solid #3b82f6; }   /* blue   – from flyer */
+td.trust-bon     { border-left: 3px solid #10b981; }   /* green  – receipt    */
+td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 days old */
+
+/* Trust legend chip */
+.trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  padding: 1px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+.trust-chip-seed     { background: #fef3c7; color: #92400e; }
+.trust-chip-prospekt { background: #dbeafe; color: #1e3a8a; }
+.trust-chip-bon      { background: #d1fae5; color: #065f46; }
+.trust-chip-manual   { background: #f3f4f6; color: #374151; }
+.trust-chip-stale    { background: #fee2e2; color: #991b1b; }
 
 /* ── Market toggle pills ── */
 .market-toggle {

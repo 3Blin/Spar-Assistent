@@ -1,8 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient, createSSRClient } from '@/lib/supabase';
+import { createHash } from 'crypto';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+
+const RATE_LIMIT = 5;          // max uploads per IP per window
+const RATE_WINDOW_H = 24;      // window in hours
+
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
+  const db = createServerClient();
+  const id = createHash('sha256').update(`upload:${ip}`).digest('hex').slice(0, 32);
+  const windowStart = new Date(Date.now() - RATE_WINDOW_H * 3600 * 1000).toISOString();
+
+  const { data: existing } = await db
+    .from('rate_limits')
+    .select('count, window_start')
+    .eq('id', id)
+    .single();
+
+  if (!existing || existing.window_start < windowStart) {
+    // First request or window expired – reset
+    await db.from('rate_limits').upsert({ id, count: 1, window_start: new Date().toISOString() });
+    return { allowed: true, remaining: RATE_LIMIT - 1 };
+  }
+
+  if (existing.count >= RATE_LIMIT) {
+    return { allowed: false, remaining: 0 };
+  }
+
+  await db.from('rate_limits').update({ count: existing.count + 1 }).eq('id', id);
+  return { allowed: true, remaining: RATE_LIMIT - existing.count - 1 };
+}
 
 export async function GET() {
   const db = createServerClient();
@@ -17,6 +46,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const db = createServerClient();
+
+  // ── Auth check: require a logged-in user ────────────────────────────────────
+  const ssrClient = createSSRClient();
+  const { data: { user } } = await ssrClient.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Anmeldung erforderlich' }, { status: 401 });
+  }
+
+  // ── Rate limit: max 5 uploads per IP per 24 h ───────────────────────────────
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+          || request.headers.get('x-real-ip')
+          || 'unknown';
+  const { allowed, remaining } = await checkRateLimit(ip);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Upload-Limit erreicht. Bitte versuche es in ${RATE_WINDOW_H} Stunden erneut.` },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0' } }
+    );
+  }
 
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
@@ -57,7 +105,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Upload fehlgeschlagen: ${uploadErr.message}` }, { status: 500 });
   }
 
-  // Create receipt record
+  // Create receipt record (tracking uploader + rate-limit header)
   const { data: receipt, error: dbErr } = await db
     .from('receipts')
     .insert({
@@ -67,6 +115,7 @@ export async function POST(request: NextRequest) {
       file_name: file.name,
       file_size_bytes: file.size,
       ocr_status: 'pending',
+      uploaded_by_email: user.email ?? null,
     })
     .select()
     .single();
@@ -75,5 +124,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: dbErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ receipt_id: receipt.id, ocr_status: 'pending' }, { status: 201 });
+  return NextResponse.json(
+    { receipt_id: receipt.id, ocr_status: 'pending', uploads_remaining: remaining },
+    { status: 201, headers: { 'X-RateLimit-Remaining': String(remaining) } }
+  );
 }

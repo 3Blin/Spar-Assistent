@@ -51,6 +51,31 @@ function formatShortDate(dateStr: string | null | undefined) {
   return d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
 }
 
+function isStale(dateStr: string | null | undefined, days = 60): boolean {
+  if (!dateStr) return false;
+  return (Date.now() - new Date(dateStr).getTime()) > days * 86400 * 1000;
+}
+
+function trustClass(source: string | null, validFrom: string | null | undefined): string {
+  if (isStale(validFrom)) return 'trust-stale';
+  switch (source) {
+    case 'bon':      return 'trust-bon';
+    case 'prospekt': return 'trust-prospekt';
+    case 'manual':   return 'trust-manual';
+    default:         return 'trust-seed';
+  }
+}
+
+function trustChipClass(source: string | null, validFrom: string | null | undefined): string {
+  if (isStale(validFrom)) return 'trust-chip trust-chip-stale';
+  switch (source) {
+    case 'bon':      return 'trust-chip trust-chip-bon';
+    case 'prospekt': return 'trust-chip trust-chip-prospekt';
+    case 'manual':   return 'trust-chip trust-chip-manual';
+    default:         return 'trust-chip trust-chip-seed';
+  }
+}
+
 // ── Portal tooltip ────────────────────────────────────────────────────────────
 function InfoTooltip({ text }: { text: string }) {
   const [show, setShow] = useState(false);
@@ -519,11 +544,14 @@ export default function Dashboard() {
                         {activeMarkets.map(m => {
                           const entry = priceMap[cat.id]?.[m.id];
                           const isCheapest = m.id === cheapestId;
+                          const stale = entry ? isStale(entry.valid_from) : false;
+                          const tClass = entry ? trustClass(entry.source, entry.valid_from) : '';
+                          const chipClass = entry ? trustChipClass(entry.source, entry.valid_from) : '';
                           const src = entry ? sourceInfo(entry.source) : null;
                           return (
                             <td
                               key={m.id}
-                              className={`text-right ${isCheapest ? 'price-cheapest' : ''} ${!entry ? 'price-missing' : ''}`}
+                              className={`text-right ${tClass} ${isCheapest ? 'price-cheapest' : ''} ${!entry ? 'price-missing' : ''}`}
                             >
                               {entry ? (
                                 <>
@@ -531,8 +559,8 @@ export default function Dashboard() {
                                     {euro(Number(entry.price_value))}
                                     {entry.is_promo && <span className="ml-1 text-xs" title="Aktionspreis">🏷️</span>}
                                   </span>
-                                  <span className="price-source-line">
-                                    <span style={{ color: src?.color }}>{src?.icon} {src?.label}</span>
+                                  <span className={chipClass} style={{ display: 'inline-flex', marginTop: 3 }}>
+                                    {stale ? '⚠️ veraltet' : <>{src?.icon} {src?.label}</>}
                                     {' · '}{formatShortDate(entry.valid_from)}
                                   </span>
                                 </>
