@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSSRClient } from '@/lib/supabase';
+import { createSSRClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

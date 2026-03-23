@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createSSRClient } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
+import { createSSRClient } from '@/lib/supabase-server';
 import { createHash } from 'crypto';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
