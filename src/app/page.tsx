@@ -352,46 +352,6 @@ export default function Dashboard() {
       </div>
 
 
-      {/* ── Market Toggles ── */}
-      <div className="card animate-in" style={{ animationDelay: '0.04s' }}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-            Meine Märkte
-          </span>
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Auswahl wird gespeichert</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {markets.map(m => {
-            const active = activeMarketIds.has(m.id);
-            // AUDIT-FIX: aria-pressed für Screen-Reader Toggle-Zustand
-            return (
-              <button
-                key={m.id}
-                onClick={() => toggleMarket(m.id)}
-                className="market-toggle"
-                data-active={active ? 'true' : 'false'}
-                aria-pressed={active}
-                aria-label={`${m.name}${m.distance_km != null ? `, ${m.distance_km} km` : ''} ${active ? '(aktiv)' : '(inaktiv)'}`}
-              >
-                <span className="market-toggle-icon" aria-hidden="true">{marketIcon(m.name)}</span>
-                <span className="market-toggle-name">{m.name}</span>
-                {m.distance_km != null && (
-                  <span className="market-toggle-dist" aria-hidden="true">
-                    <MapPin size={9} style={{ display: 'inline', verticalAlign: 'middle' }} aria-hidden="true" />
-                    {' '}{m.distance_km} km
-                  </span>
-                )}
-                {active && (
-                  <span className="market-toggle-check" aria-hidden="true">
-                    <Check size={11} strokeWidth={3} aria-hidden="true" />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Quick Ranking (always visible, no button needed) ── */}
       {quickRanking.length > 0 && (
         <div className="animate-in" style={{ animationDelay: '0.06s' }}>
@@ -469,6 +429,45 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* ── Market Toggles (nach Ranking, damit das Ergebnis zuerst sichtbar ist) ── */}
+      <div className="card animate-in" style={{ animationDelay: '0.08s' }}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+            Meine Märkte
+          </span>
+          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Auswahl wird gespeichert</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {markets.map(m => {
+            const active = activeMarketIds.has(m.id);
+            return (
+              <button
+                key={m.id}
+                onClick={() => toggleMarket(m.id)}
+                className="market-toggle"
+                data-active={active ? 'true' : 'false'}
+                aria-pressed={active}
+                aria-label={`${m.name}${m.distance_km != null ? `, ${m.distance_km} km` : ''} ${active ? '(aktiv)' : '(inaktiv)'}`}
+              >
+                <span className="market-toggle-icon" aria-hidden="true">{marketIcon(m.name)}</span>
+                <span className="market-toggle-name">{m.name}</span>
+                {m.distance_km != null && (
+                  <span className="market-toggle-dist" aria-hidden="true">
+                    <MapPin size={9} style={{ display: 'inline', verticalAlign: 'middle' }} aria-hidden="true" />
+                    {' '}{m.distance_km} km
+                  </span>
+                )}
+                {active && (
+                  <span className="market-toggle-check" aria-hidden="true">
+                    <Check size={11} strokeWidth={3} aria-hidden="true" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── Settings (collapsible) ── */}
       <div className="animate-in" style={{ animationDelay: '0.08s' }}>
