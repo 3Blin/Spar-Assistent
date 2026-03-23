@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Settings, Info, Table2, Trophy, MapPin, Check } from 'lucide-react';
+import { Camera, Settings, Info, Table2, Trophy, MapPin, Check, Navigation, LocateFixed } from 'lucide-react';
 import type { Market, Category, PriceEntry, CalculationResponse } from '@/lib/types';
 
 type TravelMode = 'none' | 'fixed' | 'factor';
@@ -156,6 +156,17 @@ function MarketAvatar({ name, size = 22 }: { name: string; size?: number }) {
 
 const marketIcon = (name: string) => <MarketAvatar name={name} />;
 
+
+// ── Haversine distance (km) ──────────────────────────────────────────────────
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Dashboard() {
   const [markets, setMarkets]     = useState<Market[]>([]);
@@ -179,6 +190,44 @@ export default function Dashboard() {
   const [showInfo, setShowInfo]         = useState(false);
   const [showMatrix, setShowMatrix]     = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  type GeoState = 'idle'|'loading'|'active'|'denied'|'error';
+  const [geoState, setGeoState]=useState<GeoState>('idle');
+  const [userLat,setUserLat]=useState<number|null>(null);
+  const [userLng,setUserLng]=useState<number|null>(null);
+  const [radiusKm,setRadiusKm]=useState(10);
+  const marketDistances=useMemo<Record<string,number|null>>(()=>{
+    if(userLat==null||userLng==null)return{};
+    const map:Record<string,number|null>={};
+    for(const m of markets){if(m.latitude!=null&&m.longitude!=null){map[m.id]=Math.round(haversineKm(userLat,userLng,m.latitude,m.longitude)*10)/10;}else{map[m.id]=null;}}
+    return map;
+  },[userLat,userLng,markets]);
+  const effectiveDist=useCallback((m:{id:string;distance_km:number|null})=>{
+    if(marketDistances[m.id]!==undefined)return marketDistances[m.id];
+    return m.distance_km;
+  },[marketDistances]);
+  useEffect(()=>{
+    if(geoState!=='active'||!markets.length)return;
+    const within=markets.filter(m=>{const d=marketDistances[m.id];return d!=null&&d<=radiusKm;}).map(m=>m.id);
+    if(within.length>0){setActiveMarketIds(new Set(within));setResult(null);}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[geoState,marketDistances]);
+  useEffect(()=>{
+    if(geoState!=='active'||!markets.length)return;
+    const within=markets.filter(m=>{const d=marketDistances[m.id];return d!=null&&d<=radiusKm;}).map(m=>m.id);
+    if(within.length>0){setActiveMarketIds(new Set(within));setResult(null);}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[radiusKm]);
+  const requestGeolocation=()=>{
+    if(!navigator.geolocation){setGeoState('error');return;}
+    setGeoState('loading');
+    navigator.geolocation.getCurrentPosition(
+      pos=>{setUserLat(pos.coords.latitude);setUserLng(pos.coords.longitude);setGeoState('active');},
+      err=>{setGeoState(err.code===1?'denied':'error');},
+      {enableHighAccuracy:false,timeout:10000}
+    );
+  };
+
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -406,12 +455,7 @@ export default function Dashboard() {
                   </span>
                   <span aria-hidden="true">{marketIcon(r.market.name)}</span>
                   <span className="font-display font-bold text-base">{r.market.name}</span>
-                  {r.market.distance_km != null && (
-                    <span className="text-xs font-mono ml-auto flex items-center gap-0.5" style={{ color: 'var(--color-text-muted)' }} aria-label={`${r.market.distance_km} Kilometer Entfernung`}>
-                      <MapPin size={9} aria-hidden="true" />
-                      {r.market.distance_km} km
-                    </span>
-                  )}
+                  {(()=>{const d=effectiveDist(r.market);return d!=null?(<span className="text-xs font-mono ml-auto flex items-center gap-0.5" style={{color:'var(--color-text-muted)'}} aria-label={`${d} Kilometer Entfernung`}><MapPin size={9} aria-hidden="true"/>{d} km</span>):null;})()}
                 </div>
                 <div className="flex items-end justify-between">
                   <span className="font-mono font-bold text-xl">{euro(r.sum)}</span>
@@ -430,43 +474,50 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Market Toggles (nach Ranking, damit das Ergebnis zuerst sichtbar ist) ── */}
+      {/* ── Market Toggles mit Geo-Filter ── */}
       <div className="card animate-in" style={{ animationDelay: '0.08s' }}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-            Meine Märkte
-          </span>
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Auswahl wird gespeichert</span>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Meine Märkte</span>
+          {geoState === 'idle' || geoState === 'denied' || geoState === 'error' ? (
+            <button onClick={requestGeolocation} className="geo-btn" aria-label="Standort erkennen" title={geoState==='denied'?'Standortzugriff verweigert':undefined}>
+              <Navigation size={12} aria-hidden="true"/>
+              {geoState==='denied'?'Zugriff verweigert':geoState==='error'?'Fehler – nochmal?':'Umkreis-Suche'}
+            </button>
+          ) : geoState === 'loading' ? (
+            <span className="geo-btn geo-btn-loading" aria-live="polite"><span className="spinner" style={{width:12,height:12}} aria-hidden="true"/>Ermittle…</span>
+          ) : (
+            <button onClick={()=>{setGeoState('idle');setUserLat(null);setUserLng(null);}} className="geo-btn geo-btn-active" aria-label="Standortmodus deaktivieren">
+              <LocateFixed size={12} aria-hidden="true"/>Standort aktiv
+            </button>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {markets.map(m => {
-            const active = activeMarketIds.has(m.id);
-            return (
-              <button
-                key={m.id}
-                onClick={() => toggleMarket(m.id)}
-                className="market-toggle"
-                data-active={active ? 'true' : 'false'}
-                aria-pressed={active}
-                aria-label={`${m.name}${m.distance_km != null ? `, ${m.distance_km} km` : ''} ${active ? '(aktiv)' : '(inaktiv)'}`}
-              >
+        {geoState === 'active' && (
+          <div className="geo-radius-row">
+            <MapPin size={13} aria-hidden="true" style={{color:'var(--color-accent)',flexShrink:0}}/>
+            <label htmlFor="radius-slider" className="geo-radius-label">Umkreis: <strong>{radiusKm} km</strong></label>
+            <input id="radius-slider" type="range" min={1} max={50} step={1} value={radiusKm} onChange={e=>setRadiusKm(Number(e.target.value))} className="geo-radius-slider"/>
+            <span className="geo-radius-count" aria-live="polite">{activeMarketIds.size} von {markets.length}</span>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2" style={{marginTop:geoState==='active'?'0.75rem':0}}>
+          {[...markets].sort((a,b)=>{
+            if(geoState==='active'){const da=effectiveDist(a)??9999;const db=effectiveDist(b)??9999;return da-db;}
+            return (a.distance_km??9999)-(b.distance_km??9999);
+          }).map(m=>{
+            const active=activeMarketIds.has(m.id);
+            const dist=effectiveDist(m);
+            const outside=geoState==='active'&&dist!=null&&dist>radiusKm;
+            return(
+              <button key={m.id} onClick={()=>toggleMarket(m.id)} className="market-toggle" data-active={active?'true':'false'} aria-pressed={active} aria-label={`${m.name}${dist!=null?`, ${dist} km`:''}  ${active?'(aktiv)':'(inaktiv)'}${outside?' – außerhalb Umkreis':''}`} style={outside?{opacity:0.45}:undefined}>
                 <span className="market-toggle-icon" aria-hidden="true">{marketIcon(m.name)}</span>
                 <span className="market-toggle-name">{m.name}</span>
-                {m.distance_km != null && (
-                  <span className="market-toggle-dist" aria-hidden="true">
-                    <MapPin size={9} style={{ display: 'inline', verticalAlign: 'middle' }} aria-hidden="true" />
-                    {' '}{m.distance_km} km
-                  </span>
-                )}
-                {active && (
-                  <span className="market-toggle-check" aria-hidden="true">
-                    <Check size={11} strokeWidth={3} aria-hidden="true" />
-                  </span>
-                )}
+                {dist!=null&&(<span className="market-toggle-dist" aria-hidden="true"><MapPin size={9} style={{display:'inline',verticalAlign:'middle'}} aria-hidden="true"/> {dist} km</span>)}
+                {active&&(<span className="market-toggle-check" aria-hidden="true"><Check size={11} strokeWidth={3} aria-hidden="true"/></span>)}
               </button>
             );
           })}
         </div>
+        {geoState!=='active'&&(<p className="text-xs mt-2" style={{color:'var(--color-text-muted)'}}>Auswahl wird gespeichert · <span style={{color:'var(--color-accent)'}}>Umkreis-Suche</span> findet Märkte in deiner Nähe</p>)}
       </div>
 
       {/* ── Settings (collapsible) ── */}
