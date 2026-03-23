@@ -598,6 +598,79 @@ td.trust-stale    { border-left: 3px solid #ef4444 !important; }
   color: var(--color-accent);
 }
 
+
+/* ── Geolocation UI ─────────────────────────────────────────────────────────── */
+.geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.geo-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+.geo-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.geo-btn-loading {
+  cursor: default;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.geo-btn-active {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent);
+  color: var(--color-accent-dark);
+}
+.geo-btn-active:hover {
+  background: #fde4cd;
+  color: var(--color-accent-dark);
+}
+
+.geo-radius-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-surface-subtle);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+}
+.geo-radius-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.geo-radius-slider {
+  flex: 1;
+  min-width: 80px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+.geo-radius-count {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
 /* ── Spinner ────────────────────────────────────────────────────────────────── */
 .spinner {
   width: 20px;
