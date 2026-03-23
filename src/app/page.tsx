@@ -265,7 +265,7 @@ const handleAddMarket = async (e: React.FormEvent) => {
     }
     const newMkt: Market = await postRes.json();
     setMarkets(prev => [...prev, newMkt]);
-    setActiveMarketIds(prev => new Set([...prev, newMkt.id]));
+    setActiveMarketIds(prev => { const s = new Set(prev); s.add(newMkt.id); return s; });
     setNewMarketName(''); setNewMarketAddr(''); setShowAddMarket(false); setAddingMarket(false);
   };
 
