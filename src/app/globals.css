@@ -1,30 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,400&display=swap');
+/* AUDIT-FIX: @import entfernt – Fonts werden jetzt über next/font/google geladen (kein render-blocking) */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design Tokens ──────────────────────────────────────────────────────────── */
 :root {
+  /* Fonts (gesetzt via next/font CSS-Variablen in layout.tsx) */
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --color-bg: #fafaf8;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f5f5f0;
-  --color-text: #1a1a17;
-  --color-text-muted: #6b6b60;
-  --color-border: #e5e5dd;
-  --color-accent: #1a7a4c;
-  --color-accent-light: #e8f5ee;
-  --color-accent-dark: #145e3a;
-  --color-warning: #c87820;
-  --color-danger: #c43333;
+  /* AUDIT-FIX: Fox-Farbpalette als vollständiges Token-System (Marktfuchs-Rebranding) */
+  /* Hintergründe */
+  --color-bg:             #FFFCF9;   /* warmes Off-White */
+  --color-surface:        #FFFFFF;
+  --color-surface-hover:  #FFF7ED;   /* sehr helles Fox-Orange */
+  --color-surface-subtle: #FFF3E6;   /* Tabellen-Header, subtle */
+
+  /* Text */
+  --color-text:           #1C1A17;   /* warmes Schwarz */
+  --color-text-muted:     #78716C;   /* warmes Grau */
+
+  /* Rahmen */
+  --color-border:         #E8DDD5;   /* warmes Rosa-Grau */
+  --color-border-row:     #F2EAE4;   /* Tabellenzeile Trenner */
+
+  /* Akzent – Fox Orange */
+  --color-accent:         #C94A0A;   /* kräftiges Fuchs-Orange */
+  --color-accent-light:   #FEEDD8;   /* helles Tint */
+  --color-accent-dark:    #8B3207;   /* tiefer Fuchs-Dunkelton */
+
+  /* Semantische Farben */
+  --color-warning:        #D97706;   /* Amber */
+  --color-danger:         #DC2626;   /* Rot */
+  --color-success:        #15803D;   /* Grün (bleibt für Trust-Indikatoren) */
+  --color-success-light:  #DCFCE7;
+
+  /* AUDIT-FIX: Badge-Farben als Variablen statt Hardcoded-Hex */
+  --badge-green-bg:       #DCFCE7;
+  --badge-green-text:     #15803D;
+  --badge-amber-bg:       #FEF3C7;
+  --badge-amber-text:     #92400E;
+  --badge-orange-bg:      #FFEDD5;
+  --badge-orange-text:    #9A3412;
+  --badge-red-bg:         #FEE2E2;
+  --badge-red-text:       #991B1B;
+  --badge-gray-bg:        #F3F4F6;
+  --badge-gray-text:      #4B5563;
+
+  /* Trust-Chip-Farben als Variablen */
+  --chip-seed-bg:         #FEF3C7;
+  --chip-seed-text:       #92400E;
+  --chip-prospekt-bg:     #DBEAFE;
+  --chip-prospekt-text:   #1E3A8A;
+  --chip-bon-bg:          #D1FAE5;
+  --chip-bon-text:        #065F46;
+  --chip-manual-bg:       #F3F4F6;
+  --chip-manual-text:     #374151;
+  --chip-stale-bg:        #FEE2E2;
+  --chip-stale-text:      #991B1B;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
 
 html {
   font-family: var(--font-body);
@@ -38,11 +77,28 @@ body {
   min-height: 100vh;
 }
 
-/* Utility */
-.font-display { font-family: var(--font-display); }
-.font-mono { font-family: var(--font-mono); }
+/* ── AUDIT-FIX: Skip-to-Content Link (Accessibility) ─────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--color-accent);
+  color: white;
+  border-radius: 0 0 8px 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus { top: 0; }
 
-/* Card style */
+/* ── Typography utilities ───────────────────────────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }
+
+/* ── Card ───────────────────────────────────────────────────────────────────── */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -51,10 +107,10 @@ body {
   transition: box-shadow 0.2s ease;
 }
 .card:hover {
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(201, 74, 10, 0.06);
 }
 
-/* Accent button */
+/* ── Buttons ────────────────────────────────────────────────────────────────── */
 .btn-primary {
   background: var(--color-accent);
   color: white;
@@ -66,15 +122,14 @@ body {
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
 }
-.btn-primary:hover {
-  background: var(--color-accent-dark);
-}
-.btn-primary:active {
-  transform: scale(0.98);
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.btn-primary:hover  { background: var(--color-accent-dark); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* AUDIT-FIX: focus-visible statt reinem :focus für bessere Accessibility */
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .btn-secondary {
@@ -88,11 +143,31 @@ body {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.btn-secondary:hover {
-  background: var(--color-surface-hover);
+.btn-secondary:hover { background: var(--color-surface-hover); }
+
+/* ── Inputs ─────────────────────────────────────────────────────────────────── */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  background: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  /* AUDIT-FIX: outline transparent statt none – High-Contrast-Mode bleibt funktional */
+  outline: 2px solid transparent;
+  width: 100%;
+}
+input:focus, select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
-/* Table styles */
+/* ── Table ──────────────────────────────────────────────────────────────────── */
 .price-table {
   width: 100%;
   border-collapse: separate;
@@ -100,7 +175,8 @@ body {
   font-size: 0.875rem;
 }
 .price-table th {
-  background: #f8f8f5;
+  /* AUDIT-FIX: Hardcoded #f8f8f5 → CSS-Variable */
+  background: var(--color-surface-subtle);
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 600;
@@ -111,14 +187,32 @@ body {
 }
 .price-table td {
   padding: 0.625rem 1rem;
-  border-bottom: 1px solid #f0f0ea;
+  /* AUDIT-FIX: Hardcoded #f0f0ea → CSS-Variable */
+  border-bottom: 1px solid var(--color-border-row);
   vertical-align: middle;
 }
 .price-table tr:hover td {
-  background: #fafaf5;
+  /* AUDIT-FIX: Hardcoded #fafaf5 → CSS-Variable */
+  background: var(--color-surface-hover);
 }
 
-/* Status badges */
+/* AUDIT-FIX: Sticky erste Spalte für Mobile-Tabellenlesbarkeit */
+@media (max-width: 640px) {
+  .price-table th:first-child,
+  .price-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--color-surface);
+    z-index: 2;
+    border-right: 1px solid var(--color-border);
+  }
+  .price-table th:first-child {
+    background: var(--color-surface-subtle);
+    z-index: 3;
+  }
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -129,33 +223,14 @@ body {
   font-weight: 600;
   line-height: 1.6;
 }
-.badge-green { background: #e8f5ee; color: #1a7a4c; }
-.badge-amber { background: #fef3c7; color: #92400e; }
-.badge-orange { background: #ffedd5; color: #9a3412; }
-.badge-red { background: #fee2e2; color: #991b1b; }
-.badge-gray { background: #f3f4f6; color: #4b5563; }
+/* AUDIT-FIX: Alle Badge-Farben auf CSS-Variablen umgestellt */
+.badge-green  { background: var(--badge-green-bg);  color: var(--badge-green-text); }
+.badge-amber  { background: var(--badge-amber-bg);  color: var(--badge-amber-text); }
+.badge-orange { background: var(--badge-orange-bg); color: var(--badge-orange-text); }
+.badge-red    { background: var(--badge-red-bg);    color: var(--badge-red-text); }
+.badge-gray   { background: var(--badge-gray-bg);   color: var(--badge-gray-text); }
 
-/* Input styles */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-family: var(--font-body);
-  background: var(--color-surface);
-  transition: border-color 0.15s ease;
-  outline: none;
-  width: 100%;
-}
-input:focus, select:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-light);
-}
-
-/* File drop zone */
+/* ── File dropzone ──────────────────────────────────────────────────────────── */
 .dropzone {
   border: 2px dashed var(--color-border);
   border-radius: 12px;
@@ -169,26 +244,27 @@ input:focus, select:focus {
   background: var(--color-accent-light);
 }
 
-/* Price cell colors */
+/* ── Price cell highlights ──────────────────────────────────────────────────── */
 .price-cheapest {
-  background: #e8f5ee !important;
+  /* AUDIT-FIX: Hardcoded #e8f5ee → accent-light Variable */
+  background: var(--color-accent-light) !important;
   font-weight: 700;
-  color: #1a7a4c;
+  color: var(--color-accent-dark);
 }
 .price-missing {
-  color: #d97706;
+  color: var(--color-warning);
   font-style: italic;
 }
 
-/* Confidence indicator */
-.confidence-high { color: #1a7a4c; }
-.confidence-medium { color: #d97706; }
-.confidence-low { color: #c43333; }
+/* ── Confidence ─────────────────────────────────────────────────────────────── */
+.confidence-high   { color: var(--color-success); }
+.confidence-medium { color: var(--color-warning); }
+.confidence-low    { color: var(--color-danger); }
 
-/* Animations */
+/* ── Animations ─────────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .animate-in {
   animation: fadeIn 0.3s ease forwards;
@@ -196,26 +272,30 @@ input:focus, select:focus {
 
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-up {
   animation: slideUp 0.4s ease forwards;
 }
 
-/* ── Auth page card ── */
-.auth-card {
-  width: 100%;
+/* AUDIT-FIX: Animationen bei reduzierter Bewegungspräferenz deaktivieren */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .animate-slide-up,
+  .spinner {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
 }
+
+/* ── Auth page ──────────────────────────────────────────────────────────────── */
+.auth-card { width: 100%; }
 .auth-card .w-full { width: 100%; }
 
-/* ── Legal pages ── */
-.legal-page {
-  max-width: 720px;
-  margin: 0 auto;
-}
-.legal-card {
-  padding: 2rem;
-}
+/* ── Legal pages ────────────────────────────────────────────────────────────── */
+.legal-page { max-width: 720px; margin: 0 auto; }
+.legal-card { padding: 2rem; }
 .legal-back {
   display: inline-block;
   font-size: 0.875rem;
@@ -244,21 +324,15 @@ input:focus, select:focus {
   margin-top: 0.75rem;
   margin-bottom: 0.3rem;
 }
-.legal-section p { font-size: 0.875rem; line-height: 1.7; color: var(--color-text); }
-.legal-section ul {
-  font-size: 0.875rem;
-  line-height: 1.7;
-  list-style: disc;
-  padding-left: 1.25rem;
-  color: var(--color-text);
-}
-.legal-section a { color: var(--color-accent); }
+.legal-section p  { font-size: 0.875rem; line-height: 1.7; color: var(--color-text); }
+.legal-section ul { font-size: 0.875rem; line-height: 1.7; list-style: disc; padding-left: 1.25rem; color: var(--color-text); }
+.legal-section a  { color: var(--color-accent); }
 
-/* ── Portal tooltip ── */
+/* ── Portal tooltip ─────────────────────────────────────────────────────────── */
 .tooltip-popup {
   position: fixed;
   transform: translate(-50%, -100%);
-  background: #1a1a17;
+  background: #1C1A17;
   color: #fff;
   padding: 6px 10px;
   border-radius: 7px;
@@ -271,27 +345,34 @@ input:focus, select:focus {
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* ── Info icon button ── */
+/* ── Info icon button ────────────────────────────────────────────────────────── */
 .info-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   font-size: 0.7rem;
   color: var(--color-text-muted);
   background: none;
   border: none;
-  cursor: default;
+  cursor: pointer;
   padding: 0;
   line-height: 1;
   opacity: 0.6;
   transition: opacity 0.15s ease;
   flex-shrink: 0;
+  border-radius: 50%;
 }
-.info-icon:hover { opacity: 1; }
+.info-icon:hover  { opacity: 1; }
+/* AUDIT-FIX: focus-visible für keyboard navigation */
+.info-icon:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
 
-/* ── Price source sub-line ── */
+/* ── Price source sub-line ──────────────────────────────────────────────────── */
 .price-source-line {
   display: block;
   font-size: 0.65rem;
@@ -302,14 +383,14 @@ input:focus, select:focus {
   line-height: 1.3;
 }
 
-/* ── Trust indicator: left-border on price cells by source ── */
-td.trust-seed    { border-left: 3px solid #f59e0b; }   /* amber  – estimated  */
-td.trust-manual  { border-left: 3px solid #9ca3af; }   /* gray   – manual     */
-td.trust-prospekt{ border-left: 3px solid #3b82f6; }   /* blue   – from flyer */
-td.trust-bon     { border-left: 3px solid #10b981; }   /* green  – receipt    */
-td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 days old */
+/* ── Trust indicators ───────────────────────────────────────────────────────── */
+td.trust-seed     { border-left: 3px solid #f59e0b; }
+td.trust-manual   { border-left: 3px solid #9ca3af; }
+td.trust-prospekt { border-left: 3px solid #3b82f6; }
+td.trust-bon      { border-left: 3px solid #10b981; }
+td.trust-stale    { border-left: 3px solid #ef4444 !important; }
 
-/* Trust legend chip */
+/* ── Trust chips ────────────────────────────────────────────────────────────── */
 .trust-chip {
   display: inline-flex;
   align-items: center;
@@ -320,13 +401,14 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   border-radius: 100px;
   white-space: nowrap;
 }
-.trust-chip-seed     { background: #fef3c7; color: #92400e; }
-.trust-chip-prospekt { background: #dbeafe; color: #1e3a8a; }
-.trust-chip-bon      { background: #d1fae5; color: #065f46; }
-.trust-chip-manual   { background: #f3f4f6; color: #374151; }
-.trust-chip-stale    { background: #fee2e2; color: #991b1b; }
+/* AUDIT-FIX: Chip-Farben auf CSS-Variablen umgestellt */
+.trust-chip-seed     { background: var(--chip-seed-bg);      color: var(--chip-seed-text); }
+.trust-chip-prospekt { background: var(--chip-prospekt-bg);  color: var(--chip-prospekt-text); }
+.trust-chip-bon      { background: var(--chip-bon-bg);       color: var(--chip-bon-text); }
+.trust-chip-manual   { background: var(--chip-manual-bg);    color: var(--chip-manual-text); }
+.trust-chip-stale    { background: var(--chip-stale-bg);     color: var(--chip-stale-text); }
 
-/* ── Market toggle pills ── */
+/* ── Market toggle pills ────────────────────────────────────────────────────── */
 .market-toggle {
   display: inline-flex;
   align-items: center;
@@ -347,6 +429,11 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   border-color: var(--color-accent);
   color: var(--color-text);
 }
+/* AUDIT-FIX: focus-visible für Keyboard-Navigation */
+.market-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .market-toggle[data-active="true"] {
   background: var(--color-accent-light);
   border-color: var(--color-accent);
@@ -359,23 +446,17 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   color: var(--color-text-muted);
   font-family: var(--font-mono);
 }
-.market-toggle[data-active="true"] .market-toggle-dist {
-  color: var(--color-accent);
-}
-.market-toggle-check {
-  font-size: 0.75rem;
-  color: var(--color-accent);
-  font-weight: 700;
-}
+.market-toggle[data-active="true"] .market-toggle-dist { color: var(--color-accent); }
+.market-toggle-check { font-size: 0.75rem; color: var(--color-accent); font-weight: 700; }
 
-/* ── Savings banner ── */
+/* ── Savings banner ─────────────────────────────────────────────────────────── */
 .savings-banner {
-  background: linear-gradient(135deg, var(--color-accent-light) 0%, #d1f0df 100%);
+  background: linear-gradient(135deg, var(--color-accent-light) 0%, #fde0c4 100%);
   border-color: var(--color-accent);
 }
 .savings-banner-label { color: var(--color-accent); }
 .savings-banner-title { color: var(--color-accent-dark); }
-.savings-banner-body { color: var(--color-accent); }
+.savings-banner-body  { color: var(--color-accent); }
 .savings-tag {
   display: inline-block;
   background: var(--color-accent);
@@ -387,7 +468,7 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   vertical-align: middle;
 }
 
-/* ── Results grid (responsive) ── */
+/* ── Results grid ───────────────────────────────────────────────────────────── */
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -398,7 +479,7 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   border-width: 2px;
 }
 
-/* ── Info section ── */
+/* ── Collapsible toggles ────────────────────────────────────────────────────── */
 .info-toggle {
   display: flex;
   align-items: center;
@@ -417,8 +498,13 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   transition: background 0.15s ease;
 }
 .info-toggle:hover { background: var(--color-surface-hover); }
+.info-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .info-toggle-arrow { transition: transform 0.2s ease; font-size: 1.1rem; }
 
+/* ── Info panel ─────────────────────────────────────────────────────────────── */
 .info-panel { margin-top: 0.5rem; }
 .info-grid {
   display: grid;
@@ -458,7 +544,7 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   line-height: 1.5;
 }
 
-/* ── Spinner */
+/* ── Spinner ────────────────────────────────────────────────────────────────── */
 .spinner {
   width: 20px;
   height: 20px;
@@ -467,6 +553,4 @@ td.trust-stale   { border-left: 3px solid #ef4444 !important; } /* red – >60 d
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }

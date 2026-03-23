@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { Camera, Settings, Info, Table2, Trophy, MapPin, Check } from 'lucide-react';
 import type { Market, Category, PriceEntry, CalculationResponse } from '@/lib/types';
 
 type TravelMode = 'none' | 'fixed' | 'factor';
@@ -77,6 +78,7 @@ function trustChipClass(source: string | null, validFrom: string | null | undefi
 }
 
 // ── Portal tooltip ────────────────────────────────────────────────────────────
+// AUDIT-FIX: tabIndex={0} + onFocus/onBlur damit Tooltip auch per Tastatur erreichbar ist
 function InfoTooltip({ text }: { text: string }) {
   const [show, setShow] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -84,23 +86,29 @@ function InfoTooltip({ text }: { text: string }) {
 
   useEffect(() => { setMounted(true); }, []);
 
+  const handleShow = (e: React.SyntheticEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setPos({ x: r.left + r.width / 2, y: r.top - 6 });
+    setShow(true);
+  };
+
   return (
     <>
       <button
         className="info-icon"
-        onMouseEnter={e => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setPos({ x: r.left + r.width / 2, y: r.top - 6 });
-          setShow(true);
-        }}
+        onMouseEnter={handleShow}
+        onFocus={handleShow}
         onMouseLeave={() => setShow(false)}
-        tabIndex={-1}
-        aria-label="Produktinfo"
+        onBlur={() => setShow(false)}
+        tabIndex={0}
+        aria-label={`Produktinfo: ${text}`}
+        aria-describedby={undefined}
       >
-        ⓘ
+        {/* AUDIT-FIX: Lucide Info-Icon statt ⓘ-Zeichen für konsistentes Rendering */}
+        <Info size={12} aria-hidden="true" />
       </button>
       {mounted && show && createPortal(
-        <div className="tooltip-popup" style={{ left: pos.x, top: pos.y }}>
+        <div className="tooltip-popup" style={{ left: pos.x, top: pos.y }} role="tooltip">
           {text}
         </div>,
         document.body
@@ -109,16 +117,44 @@ function InfoTooltip({ text }: { text: string }) {
   );
 }
 
-// ── Market icon map ───────────────────────────────────────────────────────────
-const MARKET_ICONS: Record<string, string> = {
-  'Aldi Süd':          '🟦',
-  'Lidl':              '🟨',
-  'Penny':             '🟥',
-  'Globus':            '🟢',
-  'Mixmarkt':          '🌍',
-  'Kaufland Haßloch':  '🔴',
+// AUDIT-FIX: Initials-Avatare mit Brandfarben statt farbige Emoji-Kreise
+// (Emoji-Kreise rendern plattformabhängig unterschiedlich)
+const MARKET_COLORS: Record<string, { bg: string; text: string; initials: string }> = {
+  'Aldi Süd':          { bg: '#1a3c8f', text: '#fff', initials: 'AL' },
+  'Lidl':              { bg: '#f5c800', text: '#003087', initials: 'LI' },
+  'Penny':             { bg: '#cc0000', text: '#fff', initials: 'PE' },
+  'Globus':            { bg: '#e87722', text: '#fff', initials: 'GL' },
+  'Mixmarkt':          { bg: '#2e7d32', text: '#fff', initials: 'MX' },
+  'Kaufland Haßloch':  { bg: '#d50000', text: '#fff', initials: 'KA' },
 };
-const marketIcon = (name: string) => MARKET_ICONS[name] ?? '🏪';
+
+function MarketAvatar({ name, size = 22 }: { name: string; size?: number }) {
+  const config = MARKET_COLORS[name] ?? { bg: 'var(--color-accent)', text: '#fff', initials: name.slice(0, 2).toUpperCase() };
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        background: config.bg,
+        color: config.text,
+        fontSize: size * 0.38,
+        fontWeight: 700,
+        fontFamily: 'var(--font-mono)',
+        flexShrink: 0,
+        letterSpacing: '-0.03em',
+      }}
+    >
+      {config.initials}
+    </span>
+  );
+}
+
+const marketIcon = (name: string) => <MarketAvatar name={name} />;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Dashboard() {
@@ -315,6 +351,7 @@ export default function Dashboard() {
         </p>
       </div>
 
+
       {/* ── Market Toggles ── */}
       <div className="card animate-in" style={{ animationDelay: '0.04s' }}>
         <div className="flex items-center justify-between mb-3">
@@ -327,18 +364,28 @@ export default function Dashboard() {
           {markets.map(m => {
             const active = activeMarketIds.has(m.id);
             return (
+              {/* AUDIT-FIX: aria-pressed für Screen-Reader Toggle-Zustand */}
               <button
                 key={m.id}
                 onClick={() => toggleMarket(m.id)}
                 className="market-toggle"
                 data-active={active ? 'true' : 'false'}
+                aria-pressed={active}
+                aria-label={`${m.name}${m.distance_km != null ? `, ${m.distance_km} km` : ''} ${active ? '(aktiv)' : '(inaktiv)'}`}
               >
-                <span className="market-toggle-icon">{marketIcon(m.name)}</span>
+                <span className="market-toggle-icon" aria-hidden="true">{marketIcon(m.name)}</span>
                 <span className="market-toggle-name">{m.name}</span>
                 {m.distance_km != null && (
-                  <span className="market-toggle-dist">{m.distance_km} km</span>
+                  <span className="market-toggle-dist" aria-hidden="true">
+                    <MapPin size={9} style={{ display: 'inline', verticalAlign: 'middle' }} aria-hidden="true" />
+                    {' '}{m.distance_km} km
+                  </span>
                 )}
-                {active && <span className="market-toggle-check">✓</span>}
+                {active && (
+                  <span className="market-toggle-check" aria-hidden="true">
+                    <Check size={11} strokeWidth={3} aria-hidden="true" />
+                  </span>
+                )}
               </button>
             );
           })}
@@ -353,12 +400,15 @@ export default function Dashboard() {
             <div className="savings-banner card mb-3">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider mb-1 savings-banner-label">
-                    🏆 Heute am günstigsten
+                  {/* AUDIT-FIX: Lucide Trophy statt 🏆 Emoji */}
+                  <div className="text-xs font-semibold uppercase tracking-wider mb-1 savings-banner-label flex items-center gap-1.5">
+                    <Trophy size={13} aria-hidden="true" />
+                    Heute am günstigsten
                   </div>
-                  <h2 className="font-display text-xl sm:text-2xl font-bold savings-banner-title">
-                    {marketIcon(winner.market.name)} {winner.market.name}
-                    <span className="ml-2 font-mono text-lg">{euro(winner.sum)}</span>
+                  <h2 className="font-display text-xl sm:text-2xl font-bold savings-banner-title flex items-center gap-2">
+                    <span aria-hidden="true">{marketIcon(winner.market.name)}</span>
+                    {winner.market.name}
+                    <span className="font-mono text-lg">{euro(winner.sum)}</span>
                   </h2>
                   {saving != null && saving > 0 && (
                     <p className="mt-1 savings-banner-body text-sm">
@@ -366,8 +416,10 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-                <a href={`/bon`} className="btn-primary no-underline text-sm">
-                  📸 Bon hochladen
+                {/* AUDIT-FIX: Lucide Camera statt 📸 Emoji */}
+                <a href={`/bon`} className="btn-primary no-underline text-sm flex items-center gap-1.5">
+                  <Camera size={14} aria-hidden="true" />
+                  Bon hochladen
                 </a>
               </div>
             </div>
@@ -384,16 +436,19 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className="font-mono text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                    aria-hidden="true"
                     style={i === 0
                       ? { background: 'var(--color-accent)', color: 'white' }
-                      : { background: '#f0f0ea', color: 'var(--color-text-muted)' }
+                      : { background: 'var(--color-border-row)', color: 'var(--color-text-muted)' }
                     }
                   >
                     {i + 1}
                   </span>
+                  <span aria-hidden="true">{marketIcon(r.market.name)}</span>
                   <span className="font-display font-bold text-base">{r.market.name}</span>
                   {r.market.distance_km != null && (
-                    <span className="text-xs font-mono ml-auto" style={{ color: 'var(--color-text-muted)' }}>
+                    <span className="text-xs font-mono ml-auto flex items-center gap-0.5" style={{ color: 'var(--color-text-muted)' }} aria-label={`${r.market.distance_km} Kilometer Entfernung`}>
+                      <MapPin size={9} aria-hidden="true" />
                       {r.market.distance_km} km
                     </span>
                   )}
@@ -417,9 +472,13 @@ export default function Dashboard() {
 
       {/* ── Settings (collapsible) ── */}
       <div className="animate-in" style={{ animationDelay: '0.08s' }}>
-        <button className="info-toggle" onClick={() => setShowSettings(v => !v)}>
-          <span>⚙️ Fahrtkosten einrechnen</span>
-          <span className="info-toggle-arrow" style={{ transform: showSettings ? 'rotate(180deg)' : 'none' }}>▾</span>
+        {/* AUDIT-FIX: Lucide Settings + aria-expanded */}
+        <button className="info-toggle" onClick={() => setShowSettings(v => !v)} aria-expanded={showSettings}>
+          <span className="flex items-center gap-2">
+            <Settings size={15} aria-hidden="true" />
+            Fahrtkosten einrechnen
+          </span>
+          <span className="info-toggle-arrow" style={{ transform: showSettings ? 'rotate(180deg)' : 'none' }} aria-hidden="true">▾</span>
         </button>
         {showSettings && (
           <div className="card animate-in" style={{ marginTop: '0.5rem' }}>
@@ -508,9 +567,13 @@ export default function Dashboard() {
 
       {/* ── Price Matrix (collapsible) ── */}
       <div className="animate-in" style={{ animationDelay: '0.1s' }}>
-        <button className="info-toggle" onClick={() => setShowMatrix(v => !v)}>
-          <span>📊 Preisübersicht – alle {categories.length} Kategorien</span>
-          <span className="info-toggle-arrow" style={{ transform: showMatrix ? 'rotate(180deg)' : 'none' }}>▾</span>
+        {/* AUDIT-FIX: Lucide Table2 + aria-expanded */}
+        <button className="info-toggle" onClick={() => setShowMatrix(v => !v)} aria-expanded={showMatrix}>
+          <span className="flex items-center gap-2">
+            <Table2 size={15} aria-hidden="true" />
+            Preisübersicht – alle {categories.length} Kategorien
+          </span>
+          <span className="info-toggle-arrow" style={{ transform: showMatrix ? 'rotate(180deg)' : 'none' }} aria-hidden="true">▾</span>
         </button>
 
         {showMatrix && (
@@ -601,20 +664,24 @@ export default function Dashboard() {
 
       {/* ── How it works ── */}
       <div className="animate-in" style={{ animationDelay: '0.12s' }}>
+        {/* AUDIT-FIX: Lucide Info */}
         <button className="info-toggle" onClick={() => setShowInfo(v => !v)} aria-expanded={showInfo}>
-          <span>ℹ️ Wie funktioniert der Spar-Assistent?</span>
-          <span className="info-toggle-arrow" style={{ transform: showInfo ? 'rotate(180deg)' : 'none' }}>▾</span>
+          <span className="flex items-center gap-2">
+            <Info size={15} aria-hidden="true" />
+            Wie funktioniert Marktfuchs?
+          </span>
+          <span className="info-toggle-arrow" style={{ transform: showInfo ? 'rotate(180deg)' : 'none' }} aria-hidden="true">▾</span>
         </button>
 
         {showInfo && (
           <div className="card info-panel animate-in">
-            <h3 className="font-display font-bold text-lg mb-4">So funktioniert der Preisvergleich</h3>
+            <h3 className="font-display font-bold text-lg mb-4">So funktioniert Marktfuchs</h3>
             <div className="info-grid">
               <div className="info-step">
                 <div className="info-step-number">1</div>
                 <div>
                   <strong>Referenz-Warenkorb</strong>
-                  <p>Der Assistent vergleicht {categories.length} feste Grundnahrungsmittel-Kategorien. Jede steht für ein konkretes Referenzprodukt (Eigenmarke/Standardgröße). Hover über das ⓘ-Symbol in der Preisübersicht, um zu sehen, was genau verglichen wird.</p>
+                  <p>Marktfuchs vergleicht {categories.length} feste Grundnahrungsmittel-Kategorien. Jede steht für ein konkretes Referenzprodukt (Eigenmarke/Standardgröße). Hover über das ⓘ-Symbol in der Preisübersicht, um zu sehen, was genau verglichen wird.</p>
                 </div>
               </div>
               <div className="info-step">
@@ -654,7 +721,9 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="info-note">
-              💡 <strong>Tipp:</strong> Schätzwerte (🔰) sind ungenau – lade nach dem Einkauf deinen Bon hoch, um echte Preise zu hinterlegen und das Ranking präziser zu machen.
+              {/* AUDIT-FIX: aria-hidden auf dekorative Emoji */}
+              <span aria-hidden="true">💡 </span>
+              <strong>Tipp:</strong> Schätzwerte (<span aria-hidden="true">🔰</span>) sind ungenau – lade nach dem Einkauf deinen Bon hoch, um echte Preise zu hinterlegen und das Ranking präziser zu machen.
             </div>
           </div>
         )}
