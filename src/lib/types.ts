@@ -9,6 +9,8 @@ export interface Market {
   is_active: boolean;
   distance_km: number | null;
   fixed_travel_cost: number | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -125,7 +127,7 @@ export interface CalculationRequest {
   travel_mode: 'none' | 'fixed' | 'factor';
   travel_factor?: number;
   exclude_incomplete?: boolean;
-  market_ids?: string[]; // Optional: filter to specific markets
+  market_ids?: string[];
 }
 
 export interface CalculationResponse {
@@ -169,7 +171,7 @@ export interface ValidationResponse extends ValidationResult {
 export interface PriceMatrix {
   categories: Category[];
   markets: Market[];
-  prices: Record<string, Record<string, PriceEntry | null>>; // [categoryId][marketId]
+  prices: Record<string, Record<string, PriceEntry | null>>;
 }
 
 export type QualityStatus = 'sehr_gut' | 'brauchbar' | 'kritisch' | 'nicht_tragfaehig';
